@@ -1,22 +1,24 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, ShoppingCart } from "lucide-react";
 import Header from "@/components/Header";
 import TagToggle from "@/components/TagToggle";
 import ProductCard from "@/components/ProductCard";
 import UsernameModal from "@/components/UsernameModal";
 import { categories } from "@/lib/products";
 import { getProducts, getUsername } from "@/lib/store";
+import { useCart } from "@/lib/cart";
 
 const ITEMS_PER_PAGE = 8;
 
 const Index = () => {
   const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState<string | null>(categories[0]);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [username, setUsernameState] = useState<string | null>(getUsername());
   const [products, setProducts] = useState(getProducts());
+  const cartTotal = useCart((s) => s.totalItems());
 
   useEffect(() => {
     setProducts(getProducts());
@@ -24,7 +26,7 @@ const Index = () => {
 
   const filtered = useMemo(() => {
     let items = products;
-    if (activeCategory) {
+    if (activeCategory && activeCategory !== "Semua") {
       items = items.filter((p) => p.category === activeCategory);
     }
     if (searchQuery) {
@@ -52,7 +54,10 @@ const Index = () => {
               key={cat}
               label={cat}
               active={activeCategory === cat}
-              onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+              onClick={() => {
+                setActiveCategory(activeCategory === cat ? null : cat);
+                setPage(0);
+              }}
             />
           ))}
         </div>
@@ -89,6 +94,19 @@ const Index = () => {
           </button>
         </div>
       </main>
+
+      {/* Cart FAB */}
+      <button
+        onClick={() => navigate("/cart")}
+        className="fixed bottom-6 left-6 w-14 h-14 rounded-full bg-accent text-accent-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity z-10 relative"
+      >
+        <ShoppingCart className="w-6 h-6" />
+        {cartTotal > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
+            {cartTotal}
+          </span>
+        )}
+      </button>
 
       <button
         onClick={() => navigate("/upload")}

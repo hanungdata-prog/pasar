@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload as UploadIcon } from "lucide-react";
+import { Upload as UploadIcon, ZoomIn, ZoomOut } from "lucide-react";
 import Header from "@/components/Header";
 import { addProduct } from "@/lib/store";
 import { categories } from "@/lib/products";
@@ -13,6 +13,7 @@ const Upload = () => {
   const [category, setCategory] = useState(categories[1]);
   const [whatsapp, setWhatsapp] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [previewScale, setPreviewScale] = useState(1);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,8 +107,32 @@ const Upload = () => {
 
         {(name || imagePreview) && (
           <div className="flex-shrink-0">
-            <p className="text-sm text-foreground/60 mb-2">Preview</p>
-            <div className="w-64 rounded-2xl overflow-hidden shadow-xl">
+            <div className="flex items-center gap-3 mb-3">
+              <p className="text-sm text-foreground/60">Preview</p>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPreviewScale(Math.max(0.5, previewScale - 0.25))}
+                  className="w-7 h-7 rounded-full bg-accent/50 flex items-center justify-center text-accent-foreground hover:bg-accent transition-colors"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-xs text-foreground/50 w-10 text-center">
+                  {Math.round(previewScale * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPreviewScale(Math.min(2, previewScale + 0.25))}
+                  className="w-7 h-7 rounded-full bg-accent/50 flex items-center justify-center text-accent-foreground hover:bg-accent transition-colors"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+            <div
+              className="rounded-2xl overflow-hidden shadow-xl origin-top-left transition-transform duration-200"
+              style={{ width: `${256 * previewScale}px` }}
+            >
               <div className="aspect-square bg-popover overflow-hidden">
                 {imagePreview ? (
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
