@@ -15,8 +15,32 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "src": "/api/users(/.*)?",
+      "dest": "/api/users/index.js"
+    },
+    {
+      "src": "/api/products/stats/general(/.*)?",
+      "dest": "/api/products/stats/general.js"
+    },
+    {
+      "src": "/api/products/stats(/.*)?",
+      "dest": "/api/products/stats/general.js"
+    },
+    {
+      "src": "/api/ratings/stats/([^/]+)(/.*)?",
+      "dest": "/api/ratings/stats/[productId].js"
+    },
+    {
+      "src": "/api/ratings(/.*)?",
+      "dest": "/api/ratings/index.js"
+    },
+    {
+      "src": "/api/products/([^/]+)(/.*)?",
+      "dest": "/api/products/[id].js"
+    },
+    {
+      "src": "/api/products(/.*)?",
+      "dest": "/api/products/index.js"
     },
     {
       "src": "/(.*)",

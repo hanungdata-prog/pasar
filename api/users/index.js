@@ -2,7 +2,9 @@ import connectDB from '../lib/db.js';
 import User from '../models/User.js';
 
 export default async function handler(req, res) {
-  const { method } = req;
+  const { method, body } = req;
+
+  console.log('Users API - Method:', method);
 
   try {
     await connectDB();
@@ -13,7 +15,9 @@ export default async function handler(req, res) {
     }
 
     if (method === 'POST') {
-      const { deviceFingerprint, whatsapp, name, deviceInfo } = req.body;
+      const { deviceFingerprint, whatsapp, name, deviceInfo } = body;
+
+      console.log('Login attempt:', { whatsapp, name, deviceFingerprint: deviceFingerprint?.substring(0, 10) + '...' });
 
       if (!deviceFingerprint || !whatsapp) {
         return res.status(400).json({
@@ -25,6 +29,7 @@ export default async function handler(req, res) {
       let user = await User.findOne({ deviceFingerprint });
 
       if (user) {
+        console.log('Existing user found, updating...');
         if (whatsapp !== user.whatsapp) {
           const existingWhatsapp = await User.findOne({ whatsapp });
           if (existingWhatsapp) {
@@ -47,6 +52,7 @@ export default async function handler(req, res) {
         });
       }
 
+      console.log('New user, checking whatsapp...');
       const existingWhatsapp = await User.findOne({ whatsapp });
       if (existingWhatsapp) {
         return res.status(400).json({
@@ -63,6 +69,7 @@ export default async function handler(req, res) {
       });
 
       await user.save();
+      console.log('New user created:', user._id);
 
       return res.status(201).json({
         success: true,
@@ -73,12 +80,17 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   } catch (error) {
+    console.error('Users API Error:', error);
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
         message: 'Device atau WhatsApp sudah terdaftar'
       });
     }
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ 
+      success: false, 
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 }
