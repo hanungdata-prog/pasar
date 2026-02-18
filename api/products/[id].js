@@ -1,10 +1,12 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import connectDB from '../lib/db.js';
 import Product from '../models/Product.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   const { method, query } = req;
 
   try {
+    await connectDB();
+
     if (method === 'GET') {
       const { id } = query;
 
@@ -16,7 +18,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true, data: product });
       }
 
-      // Get all products for stats
       const products = await Product.find({ isActive: true });
       return res.status(200).json({ success: true, data: products });
     }
@@ -26,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { name, description, category, mainCategory, price, image, images, isActive } = req.body;
 
       const product = await Product.findByIdAndUpdate(
-        id as string,
+        id,
         { name, description, category, mainCategory, price, image, images, isActive, updatedAt: new Date() },
         { new: true, runValidators: true }
       );
@@ -42,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { id } = query;
 
       const product = await Product.findByIdAndUpdate(
-        id as string,
+        id,
         { isActive: false, updatedAt: new Date() },
         { new: true }
       );
@@ -55,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
-  } catch (error: any) {
+  } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 }

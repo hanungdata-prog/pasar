@@ -1,10 +1,9 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import connectDB from '../lib/db.js';
 import Rating from '../models/Rating.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 
-// Helper function untuk update average rating produk
-async function updateProductRating(productId: string) {
+async function updateProductRating(productId) {
   const stats = await Rating.aggregate([
     { $match: { product: productId } },
     {
@@ -26,14 +25,16 @@ async function updateProductRating(productId: string) {
   });
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   const { method, query, body } = req;
 
   try {
-    if (method === 'GET') {
-      const { product, user, minRating, maxRating, limit = 50 } = query as any;
+    await connectDB();
 
-      let queryFilter: any = {};
+    if (method === 'GET') {
+      const { product, user, minRating, maxRating, limit = 50 } = query;
+
+      let queryFilter = {};
 
       if (product) {
         queryFilter.product = product;
@@ -75,14 +76,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      // Cek apakah user sudah memberi rating pada produk ini
       let existingRating = await Rating.findOne({
         user: userId,
         product: productId
       });
 
       if (existingRating) {
-        // Update rating yang sudah ada
         existingRating.rating = rating;
         if (comment) existingRating.comment = comment;
         existingRating.updatedAt = new Date();
@@ -97,7 +96,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      // Buat rating baru
       const newRating = new Rating({
         user: userId,
         product: productId,
@@ -126,7 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
-  } catch (error: any) {
+  } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,

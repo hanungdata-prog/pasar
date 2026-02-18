@@ -1,12 +1,13 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import connectDB from '../lib/db.js';
 import User from '../models/User.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   const { method } = req;
 
   try {
+    await connectDB();
+
     if (method === 'GET') {
-      // Get all users
       const users = await User.find().select('-deviceFingerprint').limit(50);
       return res.status(200).json({ success: true, data: users });
     }
@@ -21,11 +22,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      // Cek apakah device sudah terdaftar
       let user = await User.findOne({ deviceFingerprint });
 
       if (user) {
-        // Device sudah terdaftar, update data jika ada perubahan
         if (whatsapp !== user.whatsapp) {
           const existingWhatsapp = await User.findOne({ whatsapp });
           if (existingWhatsapp) {
@@ -48,7 +47,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      // Device baru, cek apakah whatsapp sudah ada
       const existingWhatsapp = await User.findOne({ whatsapp });
       if (existingWhatsapp) {
         return res.status(400).json({
@@ -57,7 +55,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      // Buat user baru
       user = new User({
         deviceFingerprint,
         whatsapp,
@@ -75,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
-  } catch (error: any) {
+  } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,

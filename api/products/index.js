@@ -1,15 +1,16 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import connectDB from '../lib/db.js';
 import Product from '../models/Product.js';
-import Rating from '../models/Rating.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   const { method, query } = req;
 
   try {
+    await connectDB();
+
     if (method === 'GET') {
       const { search, category, minRating, sort, limit = 200 } = query;
 
-      let queryFilter: any = { isActive: true };
+      let queryFilter = { isActive: true };
 
       if (search) {
         queryFilter.$text = { $search: search };
@@ -20,10 +21,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (minRating) {
-        queryFilter.averageRating = { $gte: parseFloat(minRating as string) };
+        queryFilter.averageRating = { $gte: parseFloat(minRating) };
       }
 
-      let sortOption: any = {};
+      let sortOption = {};
       if (sort === 'rating') {
         sortOption = { averageRating: -1 };
       } else if (sort === 'newest') {
@@ -38,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const products = await Product.find(queryFilter)
         .sort(sortOption)
-        .limit(parseInt(limit as string));
+        .limit(parseInt(limit));
 
       return res.status(200).json({ success: true, data: products, total: products.length });
     }
@@ -62,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
-  } catch (error: any) {
+  } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 }
