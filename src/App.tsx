@@ -8,6 +8,8 @@ import Upload from "./pages/Upload";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
+import { UserLogin } from "./components/UserLogin";
+import { ProductRating } from "./components/ProductRating";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +21,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<UserLogin />} />
+          <Route path="/rating" element={<ProductRating />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />

@@ -1,5 +1,16 @@
 import { create } from "zustand";
-import { Product } from "./products";
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  image: string;
+  price: string;
+  rating: number;
+  ratingCount: number;
+  whatsapp: string;
+}
 
 interface CartItem {
   product: Product;

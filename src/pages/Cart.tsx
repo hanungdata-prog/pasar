@@ -2,20 +2,20 @@ import { useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, ArrowLeft, ShoppingCart } from "lucide-react";
 import Header from "@/components/Header";
 import { useCart } from "@/lib/cart";
-import { getUsername } from "@/lib/store";
+import { useUserStore } from "@/stores/userStore";
 
 const Cart = () => {
   const navigate = useNavigate();
   const { items, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
-  const username = getUsername();
+  const { user } = useUserStore();
 
   const handleCheckout = () => {
     const message = items
       .map((i) => `• ${i.product.name} x${i.quantity} - ${i.product.price}`)
       .join("\n");
     const total = `Rp ${totalPrice().toLocaleString("id-ID")}`;
-    const whatsapp = items[0]?.product.whatsapp || "6281234567890";
-    const text = `Halo, saya ${username || "pembeli"} ingin memesan:\n\n${message}\n\nTotal: ${total}`;
+    const whatsapp = (items[0]?.product.whatsapp || "6281234567890").replace(/^\+62/, "62");
+    const text = `Halo, saya ${user?.name || "pembeli"} ingin memesan:\n\n${message}\n\nTotal: ${total}`;
     window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`, "_blank");
     clearCart();
     navigate("/");
@@ -25,7 +25,7 @@ const Cart = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="flex-1 px-6 py-6 max-w-3xl mx-auto w-full">
+      <main className="flex-1 px-4 sm:px-6 py-4 sm:py-6 max-w-3xl mx-auto w-full">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-1 text-sm text-foreground/60 hover:text-foreground mb-4 transition-colors"
@@ -33,8 +33,8 @@ const Cart = () => {
           <ArrowLeft className="w-4 h-4" /> Kembali
         </button>
 
-        <h1 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-          <ShoppingCart className="w-6 h-6" /> Keranjang Belanja
+        <h1 className="text-lg sm:text-xl font-bold text-foreground mb-4 sm:mb-6 flex items-center gap-2">
+          <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" /> Keranjang Belanja
         </h1>
 
         {items.length === 0 ? (
@@ -49,16 +49,16 @@ const Cart = () => {
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {items.map((item) => (
               <div
                 key={item.product.id}
-                className="flex items-center gap-4 bg-popover rounded-2xl p-4 shadow-md"
+                className="flex items-center gap-3 sm:gap-4 bg-popover rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-md"
               >
                 <img
                   src={item.product.image}
                   alt={item.product.name}
-                  className="w-20 h-20 rounded-xl object-cover"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl object-cover"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-popover-foreground line-clamp-1">

@@ -1,21 +1,30 @@
-import { MessageCircle, ShoppingCart } from "lucide-react";
+import { MessageCircle, ShoppingCart, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import StarRating from "./StarRating";
-import { Product } from "@/lib/products";
-import { getProductRating } from "@/lib/store";
 import { useCart } from "@/lib/cart";
 import { toast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
-  product: Product;
+  product: {
+    id: string;
+    _id?: string;
+    name: string;
+    description: string;
+    category: string;
+    image: string;
+    images?: string[];
+    price: string;
+    rating: number;
+    ratingCount: number;
+    whatsapp: string;
+  };
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const navigate = useNavigate();
   const addToCart = useCart((s) => s.addToCart);
-  const { avg, count } = getProductRating(product.id);
-  const displayRating = count > 0 ? avg : product.rating;
-  const displayCount = count > 0 ? count : product.ratingCount;
+  const displayRating = product.rating || 0;
+  const displayCount = product.ratingCount || 0;
+  const displayImage = product.images?.[0] || product.image;
 
   return (
     <div
@@ -24,7 +33,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     >
       <div className="w-full aspect-square bg-popover overflow-hidden">
         <img
-          src={product.image}
+          src={displayImage}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
@@ -40,7 +49,19 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <div>
             <p className="text-[10px] text-muted-foreground">Show Details</p>
             <div className="flex items-center gap-1 mt-0.5">
-              <StarRating rating={displayRating} size={10} />
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    size={10}
+                    className={
+                      star <= Math.round(displayRating)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "fill-transparent text-foreground/30"
+                    }
+                  />
+                ))}
+              </div>
               <span className="text-[9px] text-muted-foreground">({displayCount})</span>
             </div>
           </div>
@@ -58,7 +79,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(`https://wa.me/${product.whatsapp}?text=Halo, saya tertarik dengan produk: ${product.name}`, "_blank");
+                const waNumber = (product.whatsapp || "6281234567890").replace(/^\+62/, "62");
+                window.open(`https://wa.me/${waNumber}?text=Halo, saya tertarik dengan produk: ${product.name}`, "_blank");
               }}
               className="bg-popover/80 p-1.5 rounded-full hover:bg-popover transition-colors"
             >

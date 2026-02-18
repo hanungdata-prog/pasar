@@ -1,63 +1,159 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload as UploadIcon, ZoomIn, ZoomOut } from "lucide-react";
+import { Upload as UploadIcon, ZoomIn, ZoomOut, X, Image as ImageIcon, ChevronDown } from "lucide-react";
 import Header from "@/components/Header";
-import { addProduct } from "@/lib/store";
-import { categories } from "@/lib/products";
+import { productAPI } from "@/services/api";
+import { useUserStore } from "@/stores/userStore";
+import { toast } from "@/hooks/use-toast";
+import { CATEGORIES } from "@/lib/categories";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const MAX_IMAGES = 5;
 
 const Upload = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useUserStore();
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState(categories[1]);
-  const [whatsapp, setWhatsapp] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [mainCategory, setMainCategory] = useState("");
+  const [subcategory, setSubcategory] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [previewScale, setPreviewScale] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+
+  // Debug: Log user data on mount
+  useEffect(() => {
+    console.log("=== UPLOAD PAGE DEBUG ===");
+    console.log("isAuthenticated:", isAuthenticated);
+    console.log("user:", user);
+    console.log("user.whatsapp:", user?.whatsapp);
+    const stored = localStorage.getItem('user-storage');
+    console.log("localStorage user-storage:", stored ? JSON.parse(stored) : "null");
+  }, [user, isAuthenticated]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files) {
+      const newImages: string[] = [];
+      const remainingSlots = MAX_IMAGES - images.length;
+      
+      Array.from(files).slice(0, remainingSlots).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          newImages.push(reader.result as string);
+          if (newImages.length === Math.min(files.length, remainingSlots)) {
+            setImages(prev => [...prev, ...newImages]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !description) return;
-
-    addProduct({
-      name,
-      description,
-      category,
-      image: imagePreview || "/placeholder.svg",
-      price: price || "Harga belum ditentukan",
-      whatsapp: whatsapp || "6281234567890",
-    });
-
-    navigate("/");
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !description) {
+      toast({ title: "Error", description: "Nama dan deskripsi wajib diisi", variant: "destructive" });
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast({ title: "Error", description: "Silakan login terlebih dahulu", variant: "destructive" });
+      navigate("/login");
+      return;
+    }
+
+    if (!mainCategory || !subcategory) {
+      toast({ title: "Error", description: "Pilih kategori dan subkategori", variant: "destructive" });
+      return;
+    }
+
+    if (images.length === 0) {
+      toast({ title: "Error", description: "Minimal 1 gambar harus diupload", variant: "destructive" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const priceNum = parseInt(price.replace(/[^0-9]/g, "")) || 0;
+      console.log("Creating product with whatsapp:", user?.whatsapp);
+      await productAPI.create({
+        name,
+        description,
+        category: subcategory,
+        mainCategory,
+        images,
+        image: images[0],
+        price: priceNum,
+        whatsapp: user?.whatsapp,
+      });
+      toast({ title: "Berhasil!", description: "Produk berhasil diupload" });
+      navigate("/");
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      toast({ title: "Error", description: err.message || "Gagal mengupload produk", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const selectedCategory = CATEGORIES.find(cat => cat.id === mainCategory);
+  const currentSubcategories = selectedCategory?.subcategories || [];
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="flex-1 px-8 py-6 flex gap-8 flex-col lg:flex-row">
+      <main className="flex-1 px-4 sm:px-8 py-6 flex gap-8 flex-col lg:flex-row">
         <form
           onSubmit={handleSubmit}
           className="bg-popover rounded-2xl p-6 flex-1 max-w-xl shadow-lg space-y-4"
         >
-          <div className="flex justify-center">
-            <label className="relative w-48 h-44 bg-accent rounded-2xl overflow-hidden cursor-pointer flex items-center justify-center border-2 border-dashed border-accent-foreground/20 hover:border-primary transition-colors">
-              {imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-              ) : (
-                <UploadIcon className="w-12 h-12 text-accent-foreground/40" />
+          <div>
+            <label className="block text-sm font-medium mb-2">Gambar Produk (Max {MAX_IMAGES})</label>
+            <div className="grid grid-cols-3 gap-3">
+              {images.map((img, idx) => (
+                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group">
+                  <img src={img} alt={`Product ${idx + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(idx)}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {images.length < MAX_IMAGES && (
+                <label className="aspect-square rounded-xl bg-accent border-2 border-dashed border-accent-foreground/20 hover:border-primary transition-colors cursor-pointer flex items-center justify-center">
+                  <UploadIcon className="w-8 h-8 text-accent-foreground/40" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    multiple
+                  />
+                </label>
               )}
-              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-            </label>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {images.length} / {MAX_IMAGES} gambar diupload
+            </p>
           </div>
 
           <input
@@ -67,27 +163,51 @@ const Upload = () => {
             placeholder="Nama Produk"
             className="w-full px-4 py-3 rounded-xl bg-input text-popover-foreground placeholder:text-popover-foreground/40 outline-none"
           />
+
+          {/* Category Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Kategori</label>
+            <Select value={mainCategory} onValueChange={(value) => { setMainCategory(value); setSubcategory(""); }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih Kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Subcategory Selection */}
+          {mainCategory && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Subkategori</label>
+              <Select value={subcategory} onValueChange={setSubcategory}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih Subkategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>{selectedCategory?.name}</SelectLabel>
+                    {currentSubcategories.map((sub) => (
+                      <SelectItem key={sub} value={sub}>
+                        {sub}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <input
             type="text"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            placeholder="Harga Produk"
-            className="w-full px-4 py-3 rounded-xl bg-input text-popover-foreground placeholder:text-popover-foreground/40 outline-none"
-          />
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-input text-popover-foreground outline-none"
-          >
-            {categories.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <input
-            type="text"
-            value={whatsapp}
-            onChange={(e) => setWhatsapp(e.target.value)}
-            placeholder="Nomor WhatsApp (contoh: 6281234567890)"
+            placeholder="Harga Produk (contoh: 250000)"
             className="w-full px-4 py-3 rounded-xl bg-input text-popover-foreground placeholder:text-popover-foreground/40 outline-none"
           />
           <textarea
@@ -99,13 +219,14 @@ const Upload = () => {
           />
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+            disabled={isSubmitting}
+            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            Upload Produk
+            {isSubmitting ? "Mengupload..." : "Upload Produk"}
           </button>
         </form>
 
-        {(name || imagePreview) && (
+        {(name || images.length > 0) && (
           <div className="flex-shrink-0">
             <div className="flex items-center gap-3 mb-3">
               <p className="text-sm text-foreground/60">Preview</p>
@@ -134,11 +255,11 @@ const Upload = () => {
               style={{ width: `${256 * previewScale}px` }}
             >
               <div className="aspect-square bg-popover overflow-hidden">
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                {images[0] ? (
+                  <img src={images[0]} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-popover-foreground/20">
-                    No Image
+                    <ImageIcon className="w-12 h-12" />
                   </div>
                 )}
               </div>

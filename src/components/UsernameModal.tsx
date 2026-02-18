@@ -23,7 +23,7 @@ const UsernameModal = ({ onComplete }: UsernameModalProps) => {
           Selamat Datang! 👋
         </h2>
         <p className="text-sm text-popover-foreground/60 mb-6">
-          Masukkan nama Anda untuk mulai berbelanja di Pasar Online
+          Masukkan nama Anda untuk mulai berbelanja
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
