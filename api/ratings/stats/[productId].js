@@ -50,15 +50,15 @@ export const config = {
 export default async function handler(req, res) {
   try {
     await connectDB();
-    
-    // Get productId from query parameter
-    const productId = req.query.productId || req.query.id;
+
+    // Get productId from path parameter (e.g., /api/ratings/stats/69960d3fbfa9b19a2c85b1df)
+    const { productId } = req.query;
     console.log('📊 Stats request - ProductID:', productId, 'Query:', req.query);
-    
+
     if (!productId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Product ID required. Use: /api/ratings/stats?productId=xxx' 
+      return res.status(400).json({
+        success: false,
+        message: 'Product ID required'
       });
     }
     
