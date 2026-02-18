@@ -51,11 +51,15 @@ export default async function handler(req, res) {
   try {
     await connectDB();
     
-    const productId = req.query.productId;
-    console.log('Stats for product:', productId);
+    // Get productId from query parameter
+    const productId = req.query.productId || req.query.id;
+    console.log('📊 Stats request - ProductID:', productId, 'Query:', req.query);
     
     if (!productId) {
-      return res.status(400).json({ error: 'Product ID required' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Product ID required. Use: /api/ratings/stats?productId=xxx' 
+      });
     }
     
     const stats = await Rating.aggregate([
@@ -63,15 +67,31 @@ export default async function handler(req, res) {
       { $group: { _id: '$rating', count: { $sum: 1 } } }
     ]);
     
+    console.log('📈 Raw stats:', stats);
+    
     const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    stats.forEach(s => { if(dist[s._id] !== undefined) dist[s._id] = s.count; });
+    stats.forEach(s => { 
+      if(dist[s._id] !== undefined) dist[s._id] = s.count; 
+    });
     
     const total = Object.values(dist).reduce((a,b) => a+b, 0);
     const avg = total > 0 ? Math.round(((5*dist[5] + 4*dist[4] + 3*dist[3] + 2*dist[2] + 1*dist[1]) / total) * 10) / 10 : 0;
     
-    res.status(200).json({ success: true, data: { totalRatings: total, averageRating: avg, distribution: dist } });
+    console.log('📊 Result - Total:', total, 'Avg:', avg);
+    
+    res.status(200).json({ 
+      success: true, 
+      data: { 
+        totalRatings: total, 
+        averageRating: avg, 
+        distribution: dist 
+      } 
+    });
   } catch (e) {
-    console.error('Stats error:', e.message);
-    res.status(500).json({ error: e.message });
+    console.error('❌ Stats error:', e.message);
+    res.status(500).json({ 
+      success: false, 
+      error: e.message 
+    });
   }
 }
