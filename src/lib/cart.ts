@@ -27,7 +27,9 @@ interface CartStore {
   totalPrice: () => number;
 }
 
-function parsePrice(price: string): number {
+function parsePrice(price: string | number | undefined): number {
+  if (!price) return 0;
+  if (typeof price === 'number') return price;
   const num = price.replace(/[^0-9]/g, "");
   return parseInt(num) || 0;
 }
