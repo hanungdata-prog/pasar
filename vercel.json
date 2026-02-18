@@ -23,7 +23,7 @@
       "dest": "/api/products/stats/general.js"
     },
     {
-      "src": "/api/ratings/stats/([^/]+)(/.*)?",
+      "src": "/api/ratings/stats/(?<productId>[^/]+)(/.*)?",
       "dest": "/api/ratings/stats/[productId].js"
     },
     {

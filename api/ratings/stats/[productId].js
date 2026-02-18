@@ -52,7 +52,8 @@ export default async function handler(req, res) {
     await connectDB();
 
     // Get productId from path parameter (e.g., /api/ratings/stats/69960d3fbfa9b19a2c85b1df)
-    const { productId } = req.query;
+    // Vercel passes the first capture group from the route regex as 'productId' or first query param
+    const productId = req.query.productId || Object.values(req.query)[0];
     console.log('📊 Stats request - ProductID:', productId, 'Query:', req.query);
 
     if (!productId) {
