@@ -19,7 +19,7 @@ const Header = ({ onSearch }: HeaderProps) => {
   return (
     <header className="w-full bg-header rounded-b-lg px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between relative z-10">
       <button onClick={() => navigate("/")} className="leading-tight">
-        <img src="/pasaronline.png" alt="Pasar Online" className="h-12 sm:h-16 w-auto object-contain" />
+        <img src="/pasaronline.png" alt="Pasar Online" className="h-16 sm:h-20 w-auto object-contain" />
       </button>
 
       {location.pathname === "/" && (
