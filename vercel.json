@@ -43,6 +43,22 @@
       "dest": "/pasaronline.png"
     },
     {
+      "src": "/product/([^/]+)",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/cart",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/upload",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/login",
+      "dest": "/index.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }
