@@ -1,73 +1,60 @@
-# Welcome to your Lovable project
+# 🛒 Pasar Online - Connect Rate
 
-## Project info
+Platform e-commerce modern dengan sistem rating & review untuk UMKM Indonesia.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 Fitur Utama
 
-## How can I edit this code?
+- ✅ **User Authentication** - Login dengan WhatsApp
+- ✅ **Product Management** - Upload, edit, delete produk
+- ✅ **Shopping Cart** - Tambah ke keranjang & checkout via WhatsApp
+- ✅ **Rating & Review** - Sistem rating 5 bintang dengan ulasan
+- ✅ **Category Filter** - 12 kategori dengan subkategori
+- ✅ **Multi-Image Upload** - Hingga 5 gambar per produk
+- ✅ **Responsive Design** - Mobile-friendly UI
+- ✅ **Serverless Backend** - Deploy gratis di Vercel
 
-There are several ways of editing your application.
+## 🛠️ Development
 
-**Use Lovable**
+```bash
+# Install dependencies
+npm install
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Run development server
 npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
 
-**Edit a file directly in GitHub**
+## 📦 Tech Stack
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Frontend:** React 18, Vite, TypeScript, TailwindCSS
+- **Backend:** Vercel Serverless Functions (Node.js)
+- **Database:** MongoDB Atlas
+- **UI:** shadcn/ui, Radix UI
+- **State:** Zustand
+- **Forms:** React Hook Form + Zod
 
-**Use GitHub Codespaces**
+## 🚀 Deploy
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Lihat [DEPLOYMENT.md](./DEPLOYMENT.md) untuk panduan deploy lengkap ke Vercel.
 
-## What technologies are used for this project?
+## 📖 Dokumentasi
 
-This project is built with:
+- [Deployment Guide](./DEPLOYMENT.md) - Panduan deploy step-by-step
+- [README Vercel](./README-VERCEL.md) - Quick start guide
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 💰 Gratis!
 
-## How can I deploy this project?
+Semua layanan yang digunakan memiliki free tier yang cukup untuk aplikasi ini:
+- Vercel: Hosting + Serverless Functions (gratis 100GB bandwidth/bulan)
+- MongoDB Atlas: Database (gratis 512MB)
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+**Total: Rp 0/bulan** 🎉
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**Made with ❤️ for Indonesian UMKM**
