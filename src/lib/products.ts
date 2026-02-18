@@ -20,7 +20,7 @@ export interface Product {
 }
 
 export const categories = [
-  "Close",
+  "Semua",
   "Seri baru",
   "Kets",
   "Elektronik",

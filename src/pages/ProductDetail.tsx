@@ -1,9 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useMemo, useState } from "react";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, ShoppingCart } from "lucide-react";
 import Header from "@/components/Header";
 import StarRating from "@/components/StarRating";
 import { getProducts, getUsername, addRating, getProductRating } from "@/lib/store";
+import { useCart } from "@/lib/cart";
+import { toast } from "@/hooks/use-toast";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -87,18 +89,30 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              <button
-                onClick={() =>
-                  window.open(
-                    `https://wa.me/${product.whatsapp}?text=Halo, saya ${username || "pembeli"} tertarik dengan produk: ${product.name}`,
-                    "_blank"
-                  )
-                }
-                className="mt-auto flex items-center justify-center gap-2 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
-              >
-                <MessageCircle className="w-5 h-5" />
-                Chat via WhatsApp
-              </button>
+              <div className="mt-auto flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    useCart.getState().addToCart(product);
+                    toast({ title: "Ditambahkan ke keranjang!", description: product.name });
+                  }}
+                  className="flex items-center justify-center gap-2 py-3 rounded-full bg-accent text-accent-foreground font-medium hover:opacity-90 transition-opacity"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  Tambah ke Keranjang
+                </button>
+                <button
+                  onClick={() =>
+                    window.open(
+                      `https://wa.me/${product.whatsapp}?text=Halo, saya ${username || "pembeli"} tertarik dengan produk: ${product.name}`,
+                      "_blank"
+                    )
+                  }
+                  className="flex items-center justify-center gap-2 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  Chat via WhatsApp
+                </button>
+              </div>
             </div>
           </div>
         </div>
