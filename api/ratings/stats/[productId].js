@@ -1,5 +1,5 @@
-import connectDB from '../lib/db.js';
-import Rating from '../models/Rating.js';
+import connectDB from '../../lib/db.js';
+import Rating from '../../models/Rating.js';
 
 export default async function handler(req, res) {
   const { method, query } = req;
