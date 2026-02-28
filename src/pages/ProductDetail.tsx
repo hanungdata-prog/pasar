@@ -172,7 +172,6 @@ const ProductDetail = () => {
                   alt={product.name}
                   className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => openFullscreen(currentImageIndex)}
-                  crossOrigin="anonymous"
                 />
 
                 {/* Fullscreen Button */}
@@ -221,7 +220,7 @@ const ProductDetail = () => {
                         : 'border-transparent hover:border-foreground/20'
                         }`}
                     >
-                      <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                      <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -385,7 +384,6 @@ const ProductDetail = () => {
             alt={product.name}
             className="max-w-full max-h-full w-auto h-auto object-contain"
             onClick={(e) => e.stopPropagation()}
-            crossOrigin="anonymous"
           />
         </div>
       )}
