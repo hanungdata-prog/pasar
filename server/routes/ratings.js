@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Rating from '../models/Rating.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
@@ -18,17 +19,17 @@ router.use(limiter);
 router.get('/', async (req, res) => {
   try {
     const { product, user, minRating, maxRating, limit = 50 } = req.query;
-    
+
     let query = {};
-    
+
     if (product) {
       query.product = product;
     }
-    
+
     if (user) {
       query.user = user;
     }
-    
+
     if (minRating || maxRating) {
       query.rating = {};
       if (minRating) query.rating.$gte = parseFloat(minRating);
@@ -40,7 +41,7 @@ router.get('/', async (req, res) => {
       .populate('product', 'name')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit));
-    
+
     res.json({ success: true, data: ratings, total: ratings.length });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -51,7 +52,7 @@ router.get('/', async (req, res) => {
 router.get('/product/:productId', async (req, res) => {
   try {
     const { limit = 50, sort = 'newest' } = req.query;
-    
+
     let sortOption = {};
     if (sort === 'highest') {
       sortOption = { rating: -1 };
@@ -67,7 +68,7 @@ router.get('/product/:productId', async (req, res) => {
       .populate('user', 'name deviceInfo')
       .sort(sortOption)
       .limit(parseInt(limit));
-    
+
     res.json({ success: true, data: ratings });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -154,7 +155,7 @@ router.post('/', async (req, res) => {
           { rating, comment, updatedAt: new Date() },
           { new: true }
         );
-        
+
         if (existingRating) {
           await updateProductRating(productId);
           return res.json({
@@ -166,7 +167,7 @@ router.post('/', async (req, res) => {
       } catch (updateError) {
         // Ignore update error, return original error
       }
-      
+
       return res.status(400).json({
         success: false,
         message: 'Anda sudah memberi rating pada produk ini'
@@ -180,7 +181,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { rating, comment } = req.body;
-    
+
     const updatedRating = await Rating.findByIdAndUpdate(
       req.params.id,
       { rating, comment, updatedAt: new Date() },
@@ -246,7 +247,7 @@ router.put('/:id/helpful', async (req, res) => {
 // Helper function untuk update average rating produk
 async function updateProductRating(productId) {
   const stats = await Rating.aggregate([
-    { $match: { product: productId } },
+    { $match: { product: new mongoose.Types.ObjectId(productId) } },
     {
       $group: {
         _id: '$product',
@@ -270,7 +271,7 @@ async function updateProductRating(productId) {
 router.get('/stats/:productId', async (req, res) => {
   try {
     const stats = await Rating.aggregate([
-      { $match: { product: req.params.productId } },
+      { $match: { product: new mongoose.Types.ObjectId(req.params.productId) } },
       {
         $group: {
           _id: '$rating',
@@ -286,17 +287,17 @@ router.get('/stats/:productId', async (req, res) => {
     });
 
     const totalRatings = Object.values(distribution).reduce((a, b) => a + b, 0);
-    const avgRating = totalRatings > 0 
+    const avgRating = totalRatings > 0
       ? Math.round(((5 * distribution[5] + 4 * distribution[4] + 3 * distribution[3] + 2 * distribution[2] + 1 * distribution[1]) / totalRatings) * 10) / 10
       : 0;
 
-    res.json({ 
-      success: true, 
-      data: { 
-        totalRatings, 
+    res.json({
+      success: true,
+      data: {
+        totalRatings,
         averageRating: avgRating,
-        distribution 
-      } 
+        distribution
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
