@@ -36,7 +36,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           src={displayImage}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
+          referrerPolicy="no-referrer"
         />
       </div>
 
