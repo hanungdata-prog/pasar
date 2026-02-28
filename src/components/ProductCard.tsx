@@ -36,7 +36,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
           src={displayImage}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          referrerPolicy="no-referrer"
+          referrerPolicy="strict-origin-when-cross-origin"
+          onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
         />
       </div>
 
