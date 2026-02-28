@@ -235,7 +235,7 @@ const ProductDetail = () => {
               <p className="text-sm text-popover-foreground/70 leading-relaxed">
                 {product.description}
               </p>
-              <p className="text-xl sm:text-2xl font-bold text-popover-foreground">{product.price}</p>
+              <p className="text-xl sm:text-2xl font-bold text-popover-foreground">Rp ${product.price.toLocaleString('id-ID')}</p>
 
               {/* Rating Display */}
               <div className="space-y-3">
