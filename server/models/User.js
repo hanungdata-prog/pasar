@@ -4,8 +4,7 @@ const userSchema = new mongoose.Schema({
   deviceFingerprint: {
     type: String,
     required: true,
-    unique: true,
-    index: true
+    unique: true
   },
   whatsapp: {
     type: String,
@@ -42,10 +41,6 @@ const userSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
-// Index untuk pencarian yang lebih cepat
-userSchema.index({ whatsapp: 1 });
-userSchema.index({ deviceFingerprint: 1 });
 
 const User = mongoose.model('User', userSchema);
 
