@@ -1,6 +1,7 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import RateLimit from 'express-rate-limit';
+import { uploadBase64Image } from '../utils/r2.js';
 
 const router = express.Router();
 
@@ -16,21 +17,21 @@ router.use(limiter);
 router.get('/', async (req, res) => {
   try {
     const { search, category, minRating, sort, limit = 50 } = req.query;
-    
+
     let query = { isActive: true };
-    
+
     if (search) {
       query.$text = { $search: search };
     }
-    
+
     if (category) {
       query.category = category;
     }
-    
+
     if (minRating) {
       query.averageRating = { $gte: parseFloat(minRating) };
     }
-    
+
     let sortOption = {};
     if (sort === 'rating') {
       sortOption = { averageRating: -1 };
@@ -47,7 +48,7 @@ router.get('/', async (req, res) => {
     const products = await Product.find(query)
       .sort(sortOption)
       .limit(parseInt(limit));
-    
+
     res.json({ success: true, data: products, total: products.length });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -73,13 +74,29 @@ router.post('/', async (req, res) => {
     const { name, description, category, price, image, images, whatsapp } = req.body;
     console.log("Creating product with data:", { name, category, price, whatsapp, imagesCount: images?.length });
 
+    let uploadedImage = image;
+    if (image && image.startsWith('data:image/')) {
+      uploadedImage = await uploadBase64Image(image);
+    }
+
+    let uploadedImages = images || [image];
+    if (images && Array.isArray(images)) {
+      uploadedImages = await Promise.all(
+        images.map(img => typeof img === 'string' && img.startsWith('data:image/') ? uploadBase64Image(img) : img)
+      );
+    } else if (uploadedImage) {
+      uploadedImages = [uploadedImage];
+    } else {
+      uploadedImages = [];
+    }
+
     const product = new Product({
       name,
       description,
       category,
       price,
-      image,
-      images: images || [image],
+      image: uploadedImage,
+      images: uploadedImages,
       whatsapp
     });
 
@@ -87,6 +104,7 @@ router.post('/', async (req, res) => {
     console.log("Product saved:", product);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
+    console.error("Error creating product:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -96,9 +114,21 @@ router.put('/:id', async (req, res) => {
   try {
     const { name, description, category, price, image, images, isActive } = req.body;
 
+    let uploadedImage = image;
+    if (image && image.startsWith('data:image/')) {
+      uploadedImage = await uploadBase64Image(image);
+    }
+
+    let uploadedImages = images || [];
+    if (images && Array.isArray(images)) {
+      uploadedImages = await Promise.all(
+        images.map(img => typeof img === 'string' && img.startsWith('data:image/') ? uploadBase64Image(img) : img)
+      );
+    }
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      { name, description, category, price, image, images, isActive, updatedAt: new Date() },
+      { name, description, category, price, image: uploadedImage, images: uploadedImages, isActive, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
 
@@ -108,6 +138,7 @@ router.put('/:id', async (req, res) => {
 
     res.json({ success: true, data: product });
   } catch (error) {
+    console.error("Error updating product:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -139,13 +170,13 @@ router.get('/stats/general', async (req, res) => {
       { $match: { isActive: true } },
       { $group: { _id: null, avgRating: { $avg: '$averageRating' } } }
     ]);
-    
-    res.json({ 
-      success: true, 
-      data: { 
-        totalProducts, 
-        averageRating: avgRating[0]?.avgRating || 0 
-      } 
+
+    res.json({
+      success: true,
+      data: {
+        totalProducts,
+        averageRating: avgRating[0]?.avgRating || 0
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
