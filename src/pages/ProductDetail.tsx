@@ -216,8 +216,8 @@ const ProductDetail = () => {
                       key={idx}
                       onClick={() => setCurrentImageIndex(idx)}
                       className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${idx === currentImageIndex
-                          ? 'border-primary ring-2 ring-primary/20'
-                          : 'border-transparent hover:border-foreground/20'
+                        ? 'border-primary ring-2 ring-primary/20'
+                        : 'border-transparent hover:border-foreground/20'
                         }`}
                     >
                       <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
@@ -254,7 +254,7 @@ const ProductDetail = () => {
                     ))}
                   </div>
                   <span className="text-sm text-popover-foreground/60">
-                    {(ratingStats.avg || product.averageRating || 0).toFixed(1)} ({ratingStats.count || product.totalRatings || 0} ulasan)
+                    {Number(ratingStats.avg || product.averageRating || 0).toFixed(1)} ({ratingStats.count || product.totalRatings || 0} ulasan)
                   </span>
                 </div>
 

@@ -161,7 +161,7 @@ export function ProductRating({
             {/* Left Column: Summary & Distribution */}
             <div className="md:col-span-5 p-6 bg-accent/20 border-r border-border/50 space-y-8">
               <div className="flex flex-col items-center justify-center p-6 bg-card rounded-3xl shadow-sm border border-border/50">
-                <p className="text-6xl font-black text-primary tracking-tight">{averageRating.toFixed(1)}</p>
+                <p className="text-6xl font-black text-primary tracking-tight">{Number(averageRating).toFixed(1)}</p>
                 <div className="flex justify-center mt-3 mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star

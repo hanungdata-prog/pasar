@@ -50,8 +50,8 @@ router.get('/', async (req, res) => {
     const whereClause = queryConditions.length > 0 ? `WHERE ${queryConditions.join(' AND ')}` : '';
     const sql = `
       SELECT id AS _id, name, description, category, main_category AS "mainCategory", 
-             image, images, price, whatsapp, average_rating AS "averageRating", 
-             total_ratings AS "totalRatings", is_active AS "isActive", 
+             image, images, price, whatsapp, average_rating::FLOAT AS "averageRating", 
+             total_ratings::INTEGER AS "totalRatings", is_active AS "isActive", 
              created_at AS "createdAt", updated_at AS "updatedAt"
       FROM products 
       ${whereClause} 
@@ -71,8 +71,8 @@ router.get('/:id', async (req, res) => {
   try {
     const sql = `
       SELECT id AS _id, name, description, category, main_category AS "mainCategory", 
-             image, images, price, whatsapp, average_rating AS "averageRating", 
-             total_ratings AS "totalRatings", is_active AS "isActive", 
+             image, images, price, whatsapp, average_rating::FLOAT AS "averageRating", 
+             total_ratings::INTEGER AS "totalRatings", is_active AS "isActive", 
              created_at AS "createdAt", updated_at AS "updatedAt"
       FROM products 
       WHERE id = $1`;
@@ -112,8 +112,8 @@ router.post('/', async (req, res) => {
       `INSERT INTO products (name, description, category, main_category, price, image, images, whatsapp)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id AS _id, name, description, category, main_category AS "mainCategory", 
-                 image, images, price, whatsapp, average_rating AS "averageRating", 
-                 total_ratings AS "totalRatings", is_active AS "isActive", 
+                 image, images, price, whatsapp, average_rating::FLOAT AS "averageRating", 
+                 total_ratings::INTEGER AS "totalRatings", is_active AS "isActive", 
                  created_at AS "createdAt", updated_at AS "updatedAt"`,
       [name, description, category, mainCategory, price, uploadedImage, JSON.stringify(uploadedImages), whatsapp]
     );
@@ -154,8 +154,8 @@ router.put('/:id', async (req, res) => {
            updated_at = NOW()
        WHERE id = $8
        RETURNING id AS _id, name, description, category, main_category AS "mainCategory", 
-                 image, images, price, whatsapp, average_rating AS "averageRating", 
-                 total_ratings AS "totalRatings", is_active AS "isActive", 
+                 image, images, price, whatsapp, average_rating::FLOAT AS "averageRating", 
+                 total_ratings::INTEGER AS "totalRatings", is_active AS "isActive", 
                  created_at AS "createdAt", updated_at AS "updatedAt"`,
       [name, description, category, price, uploadedImage, images ? JSON.stringify(uploadedImages) : null, isActive, req.params.id]
     );
