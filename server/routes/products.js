@@ -1,5 +1,5 @@
 import express from 'express';
-import Product from '../models/Product.js';
+import pool from '../config/db.js';
 import RateLimit from 'express-rate-limit';
 import { uploadBase64Image } from '../utils/r2.js';
 
@@ -18,38 +18,49 @@ router.get('/', async (req, res) => {
   try {
     const { search, category, minRating, sort, limit = 50 } = req.query;
 
-    let query = { isActive: true };
+    let queryValues = [];
+    let queryConditions = ['is_active = TRUE'];
 
     if (search) {
-      query.$text = { $search: search };
+      queryValues.push(`%${search}%`);
+      queryConditions.push(`(name ILIKE $${queryValues.length} OR description ILIKE $${queryValues.length})`);
     }
 
     if (category) {
-      query.category = category;
+      queryValues.push(category);
+      queryConditions.push(`category = $${queryValues.length}`);
     }
 
     if (minRating) {
-      query.averageRating = { $gte: parseFloat(minRating) };
+      queryValues.push(parseFloat(minRating));
+      queryConditions.push(`average_rating >= $${queryValues.length}`);
     }
 
-    let sortOption = {};
+    let sortSQL = 'created_at DESC';
     if (sort === 'rating') {
-      sortOption = { averageRating: -1 };
+      sortSQL = 'average_rating DESC';
     } else if (sort === 'newest') {
-      sortOption = { createdAt: -1 };
+      sortSQL = 'created_at DESC';
     } else if (sort === 'price_asc') {
-      sortOption = { price: 1 };
+      sortSQL = 'price ASC';
     } else if (sort === 'price_desc') {
-      sortOption = { price: -1 };
-    } else {
-      sortOption = { createdAt: -1 };
+      sortSQL = 'price DESC';
     }
 
-    const products = await Product.find(query)
-      .sort(sortOption)
-      .limit(parseInt(limit));
+    const whereClause = queryConditions.length > 0 ? `WHERE ${queryConditions.join(' AND ')}` : '';
+    const sql = `
+      SELECT id AS _id, name, description, category, main_category AS "mainCategory", 
+             image, images, price, whatsapp, average_rating AS "averageRating", 
+             total_ratings AS "totalRatings", is_active AS "isActive", 
+             created_at AS "createdAt", updated_at AS "updatedAt"
+      FROM products 
+      ${whereClause} 
+      ORDER BY ${sortSQL} 
+      LIMIT ${parseInt(limit)}`;
 
-    res.json({ success: true, data: products, total: products.length });
+    const result = await pool.query(sql, queryValues);
+
+    res.json({ success: true, data: result.rows, total: result.rows.length });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -58,7 +69,15 @@ router.get('/', async (req, res) => {
 // GET /api/products/:id - Get product by ID
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const sql = `
+      SELECT id AS _id, name, description, category, main_category AS "mainCategory", 
+             image, images, price, whatsapp, average_rating AS "averageRating", 
+             total_ratings AS "totalRatings", is_active AS "isActive", 
+             created_at AS "createdAt", updated_at AS "updatedAt"
+      FROM products 
+      WHERE id = $1`;
+    const result = await pool.query(sql, [req.params.id]);
+    const product = result.rows[0];
     if (!product) {
       return res.status(404).json({ success: false, message: 'Produk tidak ditemukan' });
     }
@@ -71,8 +90,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/products - Create product
 router.post('/', async (req, res) => {
   try {
-    const { name, description, category, price, image, images, whatsapp } = req.body;
-    console.log("Creating product with data:", { name, category, price, whatsapp, imagesCount: images?.length });
+    const { name, description, category, mainCategory, price, image, images, whatsapp } = req.body;
 
     let uploadedImage = image;
     if (image && image.startsWith('data:image/')) {
@@ -90,19 +108,17 @@ router.post('/', async (req, res) => {
       uploadedImages = [];
     }
 
-    const product = new Product({
-      name,
-      description,
-      category,
-      price,
-      image: uploadedImage,
-      images: uploadedImages,
-      whatsapp
-    });
+    const insertResult = await pool.query(
+      `INSERT INTO products (name, description, category, main_category, price, image, images, whatsapp)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id AS _id, name, description, category, main_category AS "mainCategory", 
+                 image, images, price, whatsapp, average_rating AS "averageRating", 
+                 total_ratings AS "totalRatings", is_active AS "isActive", 
+                 created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [name, description, category, mainCategory, price, uploadedImage, JSON.stringify(uploadedImages), whatsapp]
+    );
 
-    await product.save();
-    console.log("Product saved:", product);
-    res.status(201).json({ success: true, data: product });
+    res.status(201).json({ success: true, data: insertResult.rows[0] });
   } catch (error) {
     console.error("Error creating product:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -126,17 +142,29 @@ router.put('/:id', async (req, res) => {
       );
     }
 
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { name, description, category, price, image: uploadedImage, images: uploadedImages, isActive, updatedAt: new Date() },
-      { new: true, runValidators: true }
+    const updateResult = await pool.query(
+      `UPDATE products 
+       SET name = COALESCE($1, name), 
+           description = COALESCE($2, description), 
+           category = COALESCE($3, category), 
+           price = COALESCE($4, price), 
+           image = COALESCE($5, image), 
+           images = COALESCE($6, images), 
+           is_active = COALESCE($7, is_active), 
+           updated_at = NOW()
+       WHERE id = $8
+       RETURNING id AS _id, name, description, category, main_category AS "mainCategory", 
+                 image, images, price, whatsapp, average_rating AS "averageRating", 
+                 total_ratings AS "totalRatings", is_active AS "isActive", 
+                 created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [name, description, category, price, uploadedImage, images ? JSON.stringify(uploadedImages) : null, isActive, req.params.id]
     );
 
-    if (!product) {
+    if (updateResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Produk tidak ditemukan' });
     }
 
-    res.json({ success: true, data: product });
+    res.json({ success: true, data: updateResult.rows[0] });
   } catch (error) {
     console.error("Error updating product:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -146,13 +174,12 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/products/:id - Soft delete product
 router.delete('/:id', async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false, updatedAt: new Date() },
-      { new: true }
+    const result = await pool.query(
+      'UPDATE products SET is_active = FALSE, updated_at = NOW() WHERE id = $1 RETURNING id AS _id',
+      [req.params.id]
     );
 
-    if (!product) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Produk tidak ditemukan' });
     }
 
@@ -165,17 +192,15 @@ router.delete('/:id', async (req, res) => {
 // GET /api/products/stats/general - Get general product stats
 router.get('/stats/general', async (req, res) => {
   try {
-    const totalProducts = await Product.countDocuments({ isActive: true });
-    const avgRating = await Product.aggregate([
-      { $match: { isActive: true } },
-      { $group: { _id: null, avgRating: { $avg: '$averageRating' } } }
-    ]);
+    const statsResult = await pool.query(
+      'SELECT COUNT(*) as total_products, AVG(average_rating) as average_rating FROM products WHERE is_active = TRUE'
+    );
 
     res.json({
       success: true,
       data: {
-        totalProducts,
-        averageRating: avgRating[0]?.avgRating || 0
+        totalProducts: parseInt(statsResult.rows[0].total_products),
+        averageRating: parseFloat(statsResult.rows[0].average_rating) || 0
       }
     });
   } catch (error) {

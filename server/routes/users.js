@@ -1,5 +1,5 @@
 import express from 'express';
-import User from '../models/User.js';
+import pool from '../config/db.js';
 import RateLimit from 'express-rate-limit';
 
 const router = express.Router();
@@ -15,8 +15,8 @@ router.use(limiter);
 // GET /api/users - Get all users
 router.get('/', async (req, res) => {
   try {
-    const users = await User.find().select('-deviceFingerprint').limit(50);
-    res.json({ success: true, data: users });
+    const result = await pool.query('SELECT id AS _id, whatsapp, name, device_info AS "deviceInfo", created_at AS "createdAt" FROM users ORDER BY created_at DESC LIMIT 50');
+    res.json({ success: true, data: result.rows });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -35,41 +35,38 @@ router.post('/register-or-login', async (req, res) => {
     }
 
     // Pertama, cari pengguna berdasarkan nomor WhatsApp (Primary ID)
-    let user = await User.findOne({ whatsapp });
+    const existingUserResult = await pool.query('SELECT * FROM users WHERE whatsapp = $1', [whatsapp]);
+    let user = existingUserResult.rows[0];
 
     if (user) {
       // User dengan WhatsApp ini sudah ada -> Ini adalah proses LOGIN
-      // Bisa jadi dia login dari device lama, atau device baru.
-      // Kita cukup update deviceFingerprint ke device yang sedang dipakai
-      user.deviceFingerprint = deviceFingerprint;
-
-      if (name) user.name = name;
-      if (deviceInfo) user.deviceInfo = { ...user.deviceInfo, ...deviceInfo };
-      user.updatedAt = new Date();
-      await user.save();
+      // Update data device dan nama
+      const updateResult = await pool.query(
+        `UPDATE users
+         SET device_fingerprint = $1, name = COALESCE($2, name), device_info = COALESCE($3, device_info), updated_at = NOW()
+         WHERE id = $4
+         RETURNING id AS _id, device_fingerprint AS "deviceFingerprint", whatsapp, name, device_info AS "deviceInfo", created_at AS "createdAt", updated_at AS "updatedAt"`,
+        [deviceFingerprint, name, deviceInfo ? JSON.stringify(deviceInfo) : null, user.id]
+      );
 
       return res.json({
         success: true,
-        data: user,
+        data: updateResult.rows[0],
         message: 'Login berhasil'
       });
     }
 
     // Jika WhatsApp belum terdaftar, ini adalah pendaftaran pengguna (REGISTER) baru
-    // Kita buat user baru dengan whatsapp dan deviceFingerprint ini.
-    // Device Fingerprint yang sama di database TIDAK dilarang untuk menduplikasi akun baru selama whatsappnya unik.
-    user = new User({
-      deviceFingerprint,
-      whatsapp,
-      name: name || 'User',
-      deviceInfo
-    });
-
-    await user.save();
+    const insertResult = await pool.query(
+      `INSERT INTO users (device_fingerprint, whatsapp, name, device_info)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id AS _id, device_fingerprint AS "deviceFingerprint", whatsapp, name, device_info AS "deviceInfo", created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [deviceFingerprint, whatsapp, name || 'User', deviceInfo ? JSON.stringify(deviceInfo) : null]
+    );
 
     res.status(201).json({
       success: true,
-      data: user,
+      data: insertResult.rows[0],
       message: 'Registrasi berhasil'
     });
   } catch (error) {
@@ -80,7 +77,8 @@ router.post('/register-or-login', async (req, res) => {
 // GET /api/users/:id - Get user by ID
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-deviceFingerprint');
+    const result = await pool.query('SELECT id AS _id, whatsapp, name, device_info AS "deviceInfo", created_at AS "createdAt" FROM users WHERE id = $1', [req.params.id]);
+    const user = result.rows[0];
     if (!user) {
       return res.status(404).json({ success: false, message: 'User tidak ditemukan' });
     }
@@ -93,8 +91,8 @@ router.get('/:id', async (req, res) => {
 // GET /api/users/device/:fingerprint - Get user by device fingerprint
 router.get('/device/:fingerprint', async (req, res) => {
   try {
-    const user = await User.findOne({ deviceFingerprint: req.params.fingerprint })
-      .select('-deviceFingerprint');
+    const result = await pool.query('SELECT id AS _id, whatsapp, name, device_info AS "deviceInfo", created_at AS "createdAt" FROM users WHERE device_fingerprint = $1', [req.params.fingerprint]);
+    const user = result.rows[0];
     if (!user) {
       return res.status(404).json({ success: false, message: 'Device tidak ditemukan' });
     }
@@ -111,8 +109,8 @@ router.put('/:id', async (req, res) => {
 
     // Cek duplikasi whatsapp jika diubah
     if (whatsapp) {
-      const existing = await User.findOne({ whatsapp, _id: { $ne: req.params.id } });
-      if (existing) {
+      const existingResult = await pool.query('SELECT id AS _id FROM users WHERE whatsapp = $1 AND id != $2', [whatsapp, req.params.id]);
+      if (existingResult.rows.length > 0) {
         return res.status(400).json({
           success: false,
           message: 'Nomor WhatsApp sudah digunakan'
@@ -120,17 +118,19 @@ router.put('/:id', async (req, res) => {
       }
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { whatsapp, name, deviceInfo, updatedAt: new Date() },
-      { new: true, runValidators: true }
-    ).select('-deviceFingerprint');
+    const updateResult = await pool.query(
+      `UPDATE users
+       SET whatsapp = COALESCE($1, whatsapp), name = COALESCE($2, name), device_info = COALESCE($3, device_info), updated_at = NOW()
+       WHERE id = $4
+       RETURNING id AS _id, device_fingerprint AS "deviceFingerprint", whatsapp, name, device_info AS "deviceInfo", created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [whatsapp, name, deviceInfo ? JSON.stringify(deviceInfo) : null, req.params.id]
+    );
 
-    if (!user) {
+    if (updateResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'User tidak ditemukan' });
     }
 
-    res.json({ success: true, data: user });
+    res.json({ success: true, data: updateResult.rows[0] });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
