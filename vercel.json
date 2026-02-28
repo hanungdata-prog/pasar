@@ -1,69 +1,12 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "source": "/api/(.*)",
+      "destination": "https://pasar-production.up.railway.app/api/$1"
     },
     {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/users(/.*)?",
-      "dest": "/api/users/index.js"
-    },
-    {
-      "src": "/api/products/stats/general(/.*)?",
-      "dest": "/api/products/stats/general.js"
-    },
-    {
-      "src": "/api/ratings/stats/(?<productId>[^/]+)(/.*)?",
-      "dest": "/api/ratings/stats/[productId].js"
-    },
-    {
-      "src": "/api/ratings(/.*)?",
-      "dest": "/api/ratings/index.js"
-    },
-    {
-      "src": "/api/products/([^/]+)(/.*)?",
-      "dest": "/api/products/[id].js"
-    },
-    {
-      "src": "/api/products(/.*)?",
-      "dest": "/api/products/index.js"
-    },
-    {
-      "src": "/pasaronline.png",
-      "dest": "/pasaronline.png"
-    },
-    {
-      "src": "/product/([^/]+)",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/cart",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/upload",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/login",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
