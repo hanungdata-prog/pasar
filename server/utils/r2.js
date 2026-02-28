@@ -50,6 +50,6 @@ export const uploadBase64Image = async (base64Str) => {
         return `${publicUrlPrefix}/${filename}`;
     } catch (error) {
         console.error('Error uploading image to R2:', error);
-        throw new Error('Failed to upload image to Cloudflare R2');
+        throw new Error(`Cloudflare R2 Upload Error: ${error.message || 'Unknown error'}`);
     }
 };
