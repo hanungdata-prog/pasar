@@ -40,6 +40,7 @@ export const uploadBase64Image = async (base64Str) => {
             Key: filename,
             Body: buffer,
             ContentType: mimeType,
+            ContentDisposition: 'inline',
             // ACL: 'public-read' // optional, depending on R2 bucket settings. Typically we don't need this if bucket has public policy or custom domain
         };
 
