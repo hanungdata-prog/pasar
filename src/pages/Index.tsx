@@ -7,11 +7,13 @@ import { CategoryFilter } from "@/components/CategoryFilter";
 import { productAPI } from "@/services/api";
 import { useCart } from "@/lib/cart";
 import { CATEGORIES } from "@/lib/categories";
+import { useUserStore } from "@/stores/userStore";
 
 const ITEMS_PER_PAGE = 32;
 
 const Index = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useUserStore();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -44,10 +46,10 @@ const Index = () => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       items = items.filter(
-        (p) => p.name.toLowerCase().includes(q) || 
-               p.category?.toLowerCase().includes(q) ||
-               p.mainCategory?.toLowerCase().includes(q) ||
-               p.description?.toLowerCase().includes(q)
+        (p) => p.name.toLowerCase().includes(q) ||
+          p.category?.toLowerCase().includes(q) ||
+          p.mainCategory?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q)
       );
     }
     return items;
@@ -62,7 +64,7 @@ const Index = () => {
 
       <main className="flex-1 px-4 sm:px-8 py-4">
         {/* Modern Category Filter */}
-        <CategoryFilter 
+        <CategoryFilter
           activeCategory={activeCategory}
           onCategoryChange={(category) => {
             setActiveCategory(category);
@@ -78,8 +80,8 @@ const Index = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
               {paged.map((product) => (
-                <ProductCard 
-                  key={product._id || product.id} 
+                <ProductCard
+                  key={product._id || product.id}
                   product={{
                     id: product._id || product.id,
                     name: product.name,
@@ -143,7 +145,7 @@ const Index = () => {
 
         {/* Upload Button - Bottom */}
         <button
-          onClick={() => navigate("/upload")}
+          onClick={() => isAuthenticated ? navigate("/upload") : navigate("/login")}
           className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity"
         >
           <Plus className="w-7 h-7" />
