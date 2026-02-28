@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { productAPI, ratingAPI } from "@/services/api";
 import { useUserStore } from "@/stores/userStore";
 import { useCart } from "@/lib/cart";
+import { getImageUrl } from "@/lib/image";
 import { toast } from "@/hooks/use-toast";
 import { ProductRating } from "@/components/ProductRating";
 
@@ -46,8 +47,8 @@ const ProductDetail = () => {
       if (response.success) {
         setProduct(response.data);
         const productImages = response.data.images?.length > 0
-          ? response.data.images
-          : [response.data.image || "/placeholder.svg"];
+          ? response.data.images.map(getImageUrl)
+          : [getImageUrl(response.data.image) || "/placeholder.svg"];
         setImages(productImages);
       }
     } catch (error) {

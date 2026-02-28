@@ -2,6 +2,7 @@ import { MessageCircle, ShoppingCart, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/lib/cart";
 import { toast } from "@/hooks/use-toast";
+import { getImageUrl } from "@/lib/image";
 
 interface ProductCardProps {
   product: {
@@ -24,7 +25,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const addToCart = useCart((s) => s.addToCart);
   const displayRating = product.rating || 0;
   const displayCount = product.ratingCount || 0;
-  const displayImage = product.images?.[0] || product.image;
+  const displayImage = getImageUrl(product.images?.[0] || product.image);
 
   return (
     <div
