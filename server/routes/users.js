@@ -28,50 +28,36 @@ router.post('/register-or-login', async (req, res) => {
     const { deviceFingerprint, whatsapp, name, deviceInfo } = req.body;
 
     if (!deviceFingerprint || !whatsapp) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Device fingerprint dan WhatsApp diperlukan' 
+      return res.status(400).json({
+        success: false,
+        message: 'Device fingerprint dan WhatsApp diperlukan'
       });
     }
 
-    // Cek apakah device sudah terdaftar
-    let user = await User.findOne({ deviceFingerprint });
+    // Pertama, cari pengguna berdasarkan nomor WhatsApp (Primary ID)
+    let user = await User.findOne({ whatsapp });
 
     if (user) {
-      // Device sudah terdaftar, update data jika ada perubahan
-      if (whatsapp !== user.whatsapp) {
-        // Cek apakah whatsapp sudah digunakan device lain
-        const existingWhatsapp = await User.findOne({ whatsapp });
-        if (existingWhatsapp) {
-          return res.status(400).json({ 
-            success: false, 
-            message: 'Nomor WhatsApp sudah digunakan oleh device lain' 
-          });
-        }
-        user.whatsapp = whatsapp;
-      }
+      // User dengan WhatsApp ini sudah ada -> Ini adalah proses LOGIN
+      // Bisa jadi dia login dari device lama, atau device baru.
+      // Kita cukup update deviceFingerprint ke device yang sedang dipakai
+      user.deviceFingerprint = deviceFingerprint;
+
       if (name) user.name = name;
       if (deviceInfo) user.deviceInfo = { ...user.deviceInfo, ...deviceInfo };
       user.updatedAt = new Date();
       await user.save();
-      
-      return res.json({ 
-        success: true, 
+
+      return res.json({
+        success: true,
         data: user,
-        message: 'Login berhasil' 
+        message: 'Login berhasil'
       });
     }
 
-    // Device baru, cek apakah whatsapp sudah ada
-    const existingWhatsapp = await User.findOne({ whatsapp });
-    if (existingWhatsapp) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Nomor WhatsApp sudah terdaftar. Gunakan device yang sama atau nomor lain.' 
-      });
-    }
-
-    // Buat user baru
+    // Jika WhatsApp belum terdaftar, ini adalah pendaftaran pengguna (REGISTER) baru
+    // Kita buat user baru dengan whatsapp dan deviceFingerprint ini.
+    // Device Fingerprint yang sama di database TIDAK dilarang untuk menduplikasi akun baru selama whatsappnya unik.
     user = new User({
       deviceFingerprint,
       whatsapp,
@@ -81,18 +67,12 @@ router.post('/register-or-login', async (req, res) => {
 
     await user.save();
 
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       data: user,
-      message: 'Registrasi berhasil' 
+      message: 'Registrasi berhasil'
     });
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Device atau WhatsApp sudah terdaftar' 
-      });
-    }
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -128,14 +108,14 @@ router.get('/device/:fingerprint', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { whatsapp, name, deviceInfo } = req.body;
-    
+
     // Cek duplikasi whatsapp jika diubah
     if (whatsapp) {
       const existing = await User.findOne({ whatsapp, _id: { $ne: req.params.id } });
       if (existing) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Nomor WhatsApp sudah digunakan' 
+        return res.status(400).json({
+          success: false,
+          message: 'Nomor WhatsApp sudah digunakan'
         });
       }
     }

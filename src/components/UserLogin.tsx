@@ -130,6 +130,18 @@ export function UserLogin() {
               <li>Timezone: {user.deviceInfo?.timezone || 'Unknown'}</li>
             </ul>
           </div>
+
+          <Button
+            variant="outline"
+            className="w-full mt-4 text-destructive hover:text-destructive"
+            onClick={() => {
+              logout();
+              navigate('/');
+              toast({ title: 'Berhasil', description: 'Anda telah keluar dari akun' });
+            }}
+          >
+            Keluar Akses (Logout)
+          </Button>
         </CardContent>
       </Card>
     );
