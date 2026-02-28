@@ -53,7 +53,7 @@ const Cart = () => {
             {items.map((item) => (
               <div
                 key={item.product.id}
-                className="flex items-center gap-3 sm:gap-4 bg-popover rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-md"
+                className="flex items-center gap-4 sm:gap-6 bg-card rounded-2xl p-4 sm:p-5 shadow-sm border border-border/50 hover:shadow-md hover:border-primary/20 transition-all duration-300"
               >
                 <img
                   src={item.product.image}
@@ -65,43 +65,45 @@ const Cart = () => {
                     {item.product.name}
                   </p>
                   <p className="text-xs text-popover-foreground/60 mt-1">{item.product.price}</p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                      className="w-7 h-7 rounded-full bg-input flex items-center justify-center"
-                    >
-                      <Minus className="w-3 h-3 text-popover-foreground" />
-                    </button>
-                    <span className="text-sm font-medium text-popover-foreground w-6 text-center">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                      className="w-7 h-7 rounded-full bg-input flex items-center justify-center"
-                    >
-                      <Plus className="w-3 h-3 text-popover-foreground" />
-                    </button>
+                  <div className="flex items-center gap-4 mt-3">
+                    <div className="flex items-center rounded-full bg-accent/50 border border-border">
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-accent hover:text-primary transition-colors"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="text-sm font-semibold w-8 text-center">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-accent hover:text-primary transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <button
                   onClick={() => removeFromCart(item.product.id)}
-                  className="p-2 text-destructive hover:opacity-70"
+                  className="p-3 bg-destructive/10 text-destructive rounded-full hover:bg-destructive hover:text-destructive-foreground transition-colors ml-2"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
               </div>
             ))}
 
-            <div className="bg-popover rounded-2xl p-5 shadow-md space-y-4">
-              <div className="flex justify-between text-popover-foreground">
-                <span className="font-medium">Total</span>
-                <span className="font-bold text-lg">
+            <div className="bg-card rounded-3xl p-6 sm:p-8 shadow-sm border border-border/50 space-y-6 mt-8">
+              <div className="flex justify-between items-center text-foreground">
+                <span className="font-semibold text-lg">Total Pembayaran</span>
+                <span className="font-bold text-2xl text-primary">
                   Rp {totalPrice().toLocaleString("id-ID")}
                 </span>
               </div>
               <button
                 onClick={handleCheckout}
-                className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+                className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 hover:shadow-lg transition-all"
               >
                 Checkout via WhatsApp
               </button>

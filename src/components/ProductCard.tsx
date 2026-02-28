@@ -28,10 +28,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <div
-      className="relative rounded-2xl overflow-hidden cursor-pointer group transition-transform hover:scale-[1.02]"
+      className="relative bg-card rounded-2xl overflow-hidden cursor-pointer group hover:-translate-y-1 hover:shadow-xl transition-all duration-300 border border-border/50"
       onClick={() => navigate(`/product/${product.id}`)}
     >
-      <div className="w-full aspect-square bg-popover overflow-hidden">
+      <div className="w-full aspect-square bg-muted overflow-hidden">
         <img
           src={displayImage}
           alt={product.name}
@@ -40,29 +40,29 @@ const ProductCard = ({ product }: ProductCardProps) => {
         />
       </div>
 
-      <div className="bg-card p-3 relative">
+      <div className="p-3 sm:p-4 relative">
         <p className="text-xs text-card-foreground leading-tight line-clamp-2 mb-1">
           {product.name}
         </p>
         <div className="w-3/4 h-px bg-foreground/20 my-1.5" />
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-muted-foreground">Show Details</p>
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex flex-col">
+            <span className="text-sm sm:text-base font-bold text-foreground">{product.price}</span>
             <div className="flex items-center gap-1 mt-0.5">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    size={10}
+                    size={12}
                     className={
                       star <= Math.round(displayRating)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "fill-transparent text-foreground/30"
+                        ? "fill-yellow-400 text-yellow-400 leading-none"
+                        : "fill-transparent text-foreground/30 leading-none"
                     }
                   />
                 ))}
               </div>
-              <span className="text-[9px] text-muted-foreground">({displayCount})</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground ml-1">({displayCount})</span>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -72,7 +72,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 addToCart(product);
                 toast({ title: "Ditambahkan ke keranjang!", description: product.name });
               }}
-              className="bg-primary/80 p-1.5 rounded-full hover:bg-primary transition-colors"
+              className="bg-primary hover:bg-primary/90 p-2 rounded-full transition-colors shadow-sm"
             >
               <ShoppingCart className="w-4 h-4 text-primary-foreground" />
             </button>
@@ -82,9 +82,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 const waNumber = (product.whatsapp || "6281234567890").replace(/^\+62/, "62");
                 window.open(`https://wa.me/${waNumber}?text=Halo, saya tertarik dengan produk: ${product.name}`, "_blank");
               }}
-              className="bg-popover/80 p-1.5 rounded-full hover:bg-popover transition-colors"
+              className="bg-green-500 hover:bg-green-600 p-2 rounded-full transition-colors shadow-sm"
             >
-              <MessageCircle className="w-4 h-4 text-card-foreground" />
+              <MessageCircle className="w-4 h-4 text-white" />
             </button>
           </div>
         </div>

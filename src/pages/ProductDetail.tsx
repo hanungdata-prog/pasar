@@ -13,15 +13,19 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { user } = useUserStore();
   const [product, setProduct] = useState<any>(null);
-  const [ratingStats, setRatingStats] = useState({ avg: 0, count: 0 });
+  const [ratingStats, setRatingStats] = useState<{
+    avg: number;
+    count: number;
+    distribution: Record<number, number>;
+  }>({ avg: 0, count: 0, distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } });
   const [userRating, setUserRating] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Image gallery state
   const [images, setImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-  
+
   // Rating state
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
@@ -41,8 +45,8 @@ const ProductDetail = () => {
       const response = await productAPI.getById(productId);
       if (response.success) {
         setProduct(response.data);
-        const productImages = response.data.images?.length > 0 
-          ? response.data.images 
+        const productImages = response.data.images?.length > 0
+          ? response.data.images
           : [response.data.image || "/placeholder.svg"];
         setImages(productImages);
       }
@@ -57,7 +61,11 @@ const ProductDetail = () => {
     try {
       const response = await ratingAPI.getStats(productId);
       if (response.success) {
-        setRatingStats({ avg: response.data.averageRating, count: response.data.totalRatings });
+        setRatingStats({
+          avg: response.data.averageRating,
+          count: response.data.totalRatings,
+          distribution: response.data.distribution || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+        });
       }
     } catch (error) {
       console.error("Failed to load rating stats:", error);
@@ -77,12 +85,12 @@ const ProductDetail = () => {
 
   const handleRate = async (rating: number) => {
     if (!user || !id) return;
-    
+
     if (rating === userRating) {
       toast({ title: "Info", description: "Anda sudah memberikan rating ini", variant: "default" });
       return;
     }
-    
+
     setIsSubmittingRating(true);
     try {
       await ratingAPI.create({
@@ -165,7 +173,7 @@ const ProductDetail = () => {
                   className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => openFullscreen(currentImageIndex)}
                 />
-                
+
                 {/* Fullscreen Button */}
                 <button
                   onClick={() => openFullscreen(currentImageIndex)}
@@ -207,11 +215,10 @@ const ProductDetail = () => {
                     <button
                       key={idx}
                       onClick={() => setCurrentImageIndex(idx)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                        idx === currentImageIndex 
-                          ? 'border-primary ring-2 ring-primary/20' 
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${idx === currentImageIndex
+                          ? 'border-primary ring-2 ring-primary/20'
                           : 'border-transparent hover:border-foreground/20'
-                      }`}
+                        }`}
                     >
                       <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
                     </button>
@@ -288,11 +295,12 @@ const ProductDetail = () => {
                 )}
 
                 {/* Reviews Section */}
-                <div className="pt-4 border-t">
-                  <ProductRating 
+                <div className="pt-4 border-t mt-4">
+                  <ProductRating
                     productId={id || ''}
                     averageRating={ratingStats.avg || product.averageRating || 0}
                     totalRatings={ratingStats.count || product.totalRatings || 0}
+                    distribution={ratingStats.distribution}
                     onRatingChange={() => {
                       loadRatingStats(id || '');
                       loadProduct(id || '');
@@ -333,7 +341,7 @@ const ProductDetail = () => {
 
       {/* Fullscreen Image Viewer Modal */}
       {isFullscreenOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
           onClick={closeFullscreen}
         >

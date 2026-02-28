@@ -46,7 +46,7 @@ const Upload = () => {
     if (files) {
       const newImages: string[] = [];
       const remainingSlots = MAX_IMAGES - images.length;
-      
+
       Array.from(files).slice(0, remainingSlots).forEach((file) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -139,8 +139,11 @@ const Upload = () => {
                 </div>
               ))}
               {images.length < MAX_IMAGES && (
-                <label className="aspect-square rounded-xl bg-accent border-2 border-dashed border-accent-foreground/20 hover:border-primary transition-colors cursor-pointer flex items-center justify-center">
-                  <UploadIcon className="w-8 h-8 text-accent-foreground/40" />
+                <label className="aspect-square rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group">
+                  <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                    <UploadIcon className="w-6 h-6 text-primary" />
+                  </div>
+                  <span className="text-xs font-medium text-primary/80">Upload</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -156,13 +159,16 @@ const Upload = () => {
             </p>
           </div>
 
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nama Produk"
-            className="w-full px-4 py-3 rounded-xl bg-input text-popover-foreground placeholder:text-popover-foreground/40 outline-none"
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Nama Produk</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Masukkan nama produk"
+              className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+            />
+          </div>
 
           {/* Category Selection */}
           <div className="space-y-2">
@@ -203,20 +209,29 @@ const Upload = () => {
             </div>
           )}
 
-          <input
-            type="text"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="Harga Produk (contoh: 250000)"
-            className="w-full px-4 py-3 rounded-xl bg-input text-popover-foreground placeholder:text-popover-foreground/40 outline-none"
-          />
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Deskripsi Produk"
-            rows={6}
-            className="w-full px-4 py-3 rounded-xl bg-input text-popover-foreground placeholder:text-popover-foreground/40 outline-none resize-none"
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Harga</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">Rp</span>
+              <input
+                type="text"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="0"
+                className="w-full pl-12 pr-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Deskripsi Lengkap</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Tuliskan deskripsi lengkap produk Anda..."
+              rows={6}
+              className="w-full px-4 py-3 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
+            />
+          </div>
           <button
             type="submit"
             disabled={isSubmitting}
